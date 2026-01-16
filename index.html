@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>⚽ Football Imposter — Tap Reveal</title>
+  <style>
+    body{
+      margin:0;
+      background:radial-gradient(circle at top, #1b1f3b, #0b0d1a);
+      display:flex;
+      height:100vh;
+      align-items:center;
+      justify-content:center;
+      font-family:system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-user-select:none;
+      user-select:none;
+      -webkit-touch-callout:none;
+    }
+    canvas{
+      background:linear-gradient(180deg,#1f2447,#141735);
+      border-radius:20px;
+      box-shadow:0 20px 50px rgba(0,0,0,.5);
+      touch-action:manipulation;
+    }
+  </style>
+</head>
+<body>
+<canvas id="gameCanvas" width="420" height="820"></canvas>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const POOL = [
+  "Lionel Messi","Cristiano Ronaldo","Neymar","Kylian Mbappé",
+  "Zlatan Ibrahimović","Ronaldinho","Thierry Henry","Wayne Rooney",
+  "Luis Suárez","Karim Benzema","Mohamed Salah","Kevin De Bruyne",
+  "Luka Modrić","Xavi","Andrés Iniesta","Sergio Ramos",
+  "Virgil van Dijk","Didier Drogba","Erling Haaland","Harry Kane"
+];
+
+let assignments=[];
+let openCard=null; // which player is open
+
+function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
+function deal(){
+  const common=POOL[Math.floor(Math.random()*POOL.length)];
+  let imp; do{imp=POOL[Math.floor(Math.random()*POOL.length)];}while(imp===common);
+  assignments=shuffle([common,common,common,imp]);
+}
+
+const buttons=[
+  {x:60,y:180,w:300,h:70,label:"Player 1"},
+  {x:60,y:270,w:300,h:70,label:"Player 2"},
+  {x:60,y:360,w:300,h:70,label:"Player 3"},
+  {x:60,y:450,w:300,h:70,label:"Player 4"},
+  {x:110,y:560,w:200,h:60,label:"🔄 New Round",reset:true}
+];
+
+function inside(mx,my,b){return mx>=b.x&&mx<=b.x+b.w&&my>=b.y&&my<=b.y+b.h;}
+
+canvas.addEventListener('click',e=>{
+  const r=canvas.getBoundingClientRect();
+  const mx=e.clientX-r.left, my=e.clientY-r.top;
+
+  if(openCard!==null){
+    // close menu if X tapped
+    if(mx>330 && my>210 && my<250) openCard=null;
+    return;
+  }
+
+  buttons.forEach((b,i)=>{
+    if(inside(mx,my,b)){
+      if(b.reset){ deal(); openCard=null; }
+      else openCard=i;
+    }
+  });
+});
+
+function drawButton(b){
+  ctx.fillStyle=b.reset?"#ff9f1c":"#2a2f5a";
+  ctx.fillRect(b.x,b.y,b.w,b.h);
+  ctx.strokeStyle="#ffffff22";
+  ctx.strokeRect(b.x,b.y,b.w,b.h);
+  ctx.fillStyle="#fff";
+  ctx.font="18px system-ui";
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
+  ctx.fillText(b.label,b.x+b.w/2,b.y+b.h/2);
+}
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  ctx.fillStyle="#fff";
+  ctx.font="28px system-ui";
+  ctx.textAlign="center";
+  ctx.fillText("⚽ Football Imposter",canvas.width/2,70);
+
+  buttons.forEach(drawButton);
+
+  if(openCard!==null && !buttons[openCard].reset){
+    const name=assignments[openCard];
+    const common=assignments.find(v=>assignments.filter(x=>x===v).length>1);
+    const isImp=name!==common;
+
+    ctx.fillStyle="#000000dd";
+    ctx.fillRect(40,180,340,260);
+
+    ctx.fillStyle="#fff";
+    ctx.font="26px system-ui";
+    ctx.fillText(name,canvas.width/2,260);
+
+    if(isImp){
+      ctx.font="18px system-ui";
+      ctx.fillStyle="#ff8a8a";
+      ctx.fillText("YOU ARE THE IMPOSTER",canvas.width/2,300);
+    }
+
+    // X button
+    ctx.fillStyle="#ff5555";
+    ctx.beginPath(); ctx.arc(350,230,14,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle="#fff";
+    ctx.font="18px system-ui";
+    ctx.fillText("✕",350,232);
+  }
+
+  requestAnimationFrame(draw);
+}
+
+deal();
+draw();
+</script>
+</body>
+</html>
